@@ -18,7 +18,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 load_dotenv()
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_DOCS_DIR = PROJECT_ROOT / "data" / "official_docs"
+DEFAULT_DOCS_DIR = PROJECT_ROOT / "data" / "docs"
 DEFAULT_CHUNK_SIZE = 800
 DEFAULT_CHUNK_OVERLAP = 100
 
@@ -45,10 +45,10 @@ def _load_single_file(file_path: Path) -> List[Document]:
 
 def load_documents(docs_dir: Path | str | None = None) -> List[Document]:
     """
-    official_docs 폴더 내 PDF/TXT 문서를 재귀적으로 로드한다.
+    data/docs 폴더 내 PDF/TXT 문서를 재귀적으로 로드한다.
 
     Args:
-        docs_dir: 문서 루트 디렉터리. 기본값은 data/official_docs.
+        docs_dir: 문서 루트 디렉터리. 기본값은 data/docs.
 
     Returns:
         로드된 Document 리스트.

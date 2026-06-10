@@ -99,6 +99,19 @@ def _docs_to_context_strings(docs: List[Document]) -> List[str]:
     return [doc.page_content for doc in docs]
 
 
+def _extract_source_name(doc: Document) -> str:
+    """문서 metadata 또는 본문에서 출처명 추출."""
+    if doc.metadata.get("source_file"):
+        return str(doc.metadata["source_file"])
+    content = doc.page_content
+    for line in content.splitlines()[:5]:
+        if "[문서명]" in line:
+            return line.split("[문서명]", 1)[-1].strip()
+        if line.startswith("[문서:") and "]" in line:
+            return line[1 : line.index("]")].replace("문서:", "").strip()
+    return str(doc.metadata.get("source_path", "unknown"))
+
+
 class WorkcheckRAGChain:
     """근무체크 RAG 체인."""
 
@@ -121,37 +134,39 @@ class WorkcheckRAGChain:
     def retrieve(self, question: str) -> List[Document]:
         return self.retriever.invoke(question)
 
-    def query(self, question: str) -> Tuple[str, List[str]]:
+    def query(self, question: str) -> Tuple[str, List[str], List[str]]:
         """
-        질문에 대한 RAG 답변과 retrieved_contexts를 반환한다.
+        질문에 대한 RAG 답변, contexts, sources를 반환한다.
 
         Returns:
-            (rag_answer, retrieved_contexts)
+            (rag_answer, retrieved_contexts, sources)
         """
         docs = self.retrieve(question)
         contexts = _docs_to_context_strings(docs)
+        sources = [_extract_source_name(doc) for doc in docs]
         context_text = _format_docs(docs)
 
         chain = self.prompt | self.llm | StrOutputParser()
         answer = chain.invoke({"question": question, "context": context_text})
-        return answer, contexts
+        return answer, contexts, sources
 
 
 def get_rag_answer(
     question: str,
     index_dir: Path | str | None = None,
-    top_k: int = DEFAULT_TOP_K,
+    top_k: int = 5,
 ) -> Dict[str, object]:
     """
-    ragas_guide.py get_rag_answer()와 동일한 반환 형식.
+    RAG 답변 + 검색 context + 출처명 반환.
 
     Returns:
-        answer   : LLM이 생성한 답변
-        contexts : 검색된 문서 조각들 (리스트)
+        answer   : RAG 답변
+        contexts : 검색된 문서 chunk 리스트
+        sources  : chunk별 문서명 리스트
     """
     chain = WorkcheckRAGChain(index_dir=index_dir, top_k=top_k)
-    answer, contexts = chain.query(question)
-    return {"answer": answer, "contexts": contexts}
+    answer, contexts, sources = chain.query(question)
+    return {"answer": answer, "contexts": contexts, "sources": sources}
 
 
 def query_rag(

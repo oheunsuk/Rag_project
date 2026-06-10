@@ -1,8 +1,9 @@
+# Python / 환경
 .venv/
 __pycache__/
 *.pyc
 .env
-vectorstore/faiss_index/*
-!vectorstore/faiss_index/.gitkeep
-outputs/*
-!outputs/.gitkeep
+.streamlit/secrets.toml
+
+# 로컬 전용 (GitHub 제외)
+archive/
