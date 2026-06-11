@@ -20,6 +20,7 @@
 4. **RAGAS 평가** — Faithfulness, Answer Relevancy, Context Precision, Context Recall
 5. **Top-k 실험** — k=2, 3, 5 성능 비교
 6. **대화 기록** — session_state 기반 이전 질문 저장
+7. **계약서·스케줄 PDF 점검 데모** — 업로드 문서를 공식 RAG 기준과 비교 점검
 
 ## 순수 LLM vs RAG 비교
 
@@ -31,6 +32,15 @@
 | 최신 수치 | 단정 지양 | 공식 고시 기반 |
 
 → **RAG가 공식 근거 확인에 유리**함을 UI에서 직접 비교
+
+## 계약서·스케줄 PDF 점검 데모
+
+- 사용자가 **근로계약서 PDF**와 **스케줄표 PDF**를 업로드하면 공식 노동자료 RAG 기준과 비교해 점검 결과를 보여줍니다.
+- **업로드 PDF는 공식 RAG DB(FAISS)에 저장하지 않습니다.** 세션 내에서만 텍스트를 추출해 점검 대상으로 사용합니다.
+- **공식 RAG 검색**에는 `data/docs/`의 고용노동부 공식 자료 3개만 사용합니다.
+- PDF 텍스트 추출은 **`pypdf` 기반**이며, 스캔 이미지 PDF나 표 구조가 복잡한 PDF는 추출이 제한될 수 있습니다.
+- 추출 실패 시 **`samples/fallback/`** 내장 샘플 텍스트를 사용해 데모가 중단되지 않습니다.
+- **OCR 기반 PDF 분석**은 향후 확장 기능입니다.
 
 ## 사용 문서
 
@@ -71,7 +81,13 @@ workcheck-rag/
 │   ├── rag_chain.py
 │   ├── llm_baseline.py
 │   ├── make_eval_dataset.py
-│   └── run_ragas_eval.py
+│   ├── run_ragas_eval.py
+│   ├── pdf_utils.py              # pypdf 텍스트 추출
+│   └── demo_check.py             # 계약서·스케줄 점검 로직
+├── samples/
+│   ├── contracts/                # 샘플 계약서 PDF (선택)
+│   ├── schedules/                # 샘플 스케줄 PDF (선택)
+│   └── fallback/                 # PDF 추출 실패 시 대체 텍스트
 ├── data/
 │   ├── ground_truth.csv
 │   └── docs/
@@ -95,7 +111,8 @@ workcheck-rag/
 
 | 경로 | 역할 |
 |------|------|
-| `app.py` | Streamlit UI (챗봇·성능 평가·프로젝트 정보) |
+| `app.py` | Streamlit UI (챗봇·PDF 점검 데모 — 발표용 2탭) |
+| `samples/` | 데모용 샘플 PDF·fallback 텍스트 (공식 RAG DB 미포함) |
 | `src/` | 문서 ingest, 벡터 DB, RAG/LLM, RAGAS 파이프라인 |
 | `data/docs/` | RAG 검색 대상 공식 문서 |
 | `data/ground_truth.csv` | RAGAS 평가 질문 12개 |
@@ -177,9 +194,10 @@ OPENAI_API_KEY = "sk-..."
 - [ ] 순수 LLM 답변이 출력되는가
 - [ ] RAG 답변이 출력되는가
 - [ ] 검색된 공식 문서 expander가 열리는가
-- [ ] 성능 평가 탭이 정상 출력되는가
-- [ ] 프로젝트 정보 탭이 정상 출력되는가
+- [ ] 사이드바에 챗봇·PDF 점검 데모 2개 메뉴만 표시되는가
 - [ ] 이전 질문 기록이 저장되는가
+- [ ] 계약서·스케줄 점검 데모 탭이 정상 동작하는가
+- [ ] PDF 업로드 없이 fallback 텍스트로 점검이 진행되는가
 
 ## RAGAS 평가 결과
 
